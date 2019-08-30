@@ -1,0 +1,33 @@
+class Container extends Hail\Container\Container
+{
+    protected static $entryPoints = [
+        <?=\implode("\n\t\t", $entryPoints)?>
+    ];
+
+    protected $alias = [
+        <?=\implode("\n\t\t", $alias)?>
+    ];
+
+    protected $abstractAlias = [
+        <?=\implode("\n\t\t", $abstractAlias)?>
+    ];
+
+    public function get($name)
+    {
+        $name = $this->getAlias($name);
+
+        switch (true) {
+            case isset($this->active[$name]):
+                return $this->values[$name];
+
+            case isset(static::$entryPoints[$name]):
+                $this->active[$name] = true;
+                return $this->values[$name] = $this->{static::$entryPoints[$name]}();
+
+            default:
+                return parent::get($name);
+        }
+    }
+
+    <?=\implode("\n\n", $methods)?>
+}

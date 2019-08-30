@@ -1,0 +1,29 @@
+{
+  "name": "hail/container",
+  "description": "DI/Container",
+  "type": "library",
+  "keywords": ["hail", "framework", "DI", "container"],
+  "homepage": "http://framework.flyinghail.com/",
+  "support": {
+    "issues": "https://github.com/hail-framework/container/issues",
+    "source": "https://github.com/hail-framework/container"
+  },
+  "authors": [
+    {
+      "name": "FENG Hao",
+      "email": "flyinghail@msn.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Hail\\Container\\": "src/"
+    }
+  },
+  "license": "MIT",
+  "require": {
+    "php": ">=7.1.3",
+    "hail/arrays": "^0.8.0",
+    "hail/singleton": "^0.8.0",
+    "psr/container": "^1.0"
+  }
+}
