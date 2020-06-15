@@ -101,7 +101,8 @@ class Container implements ContainerInterface, \ArrayAccess
                 break;
 
             case \class_exists($name):
-                return $this->autowire($name);
+                $this->values[$name] = $this->create($name);
+                break;
 
             default:
                 throw new NotFoundException($name);
@@ -109,8 +110,8 @@ class Container implements ContainerInterface, \ArrayAccess
 
         $this->active[$name] = true;
 
-        $calls = $this->calls[$name] ?? null;
-        if (null !== $calls) {
+        if (isset($this->calls[$name])) {
+            $calls = $this->calls[$name];
             foreach ($calls['method'] as $index => $method) {
                 $this->call([$this->values[$name], $method], $this->callsMap['method'][$name][$index]);
             }
@@ -391,7 +392,7 @@ class Container implements ContainerInterface, \ArrayAccess
         $this->callsMap['method'][$name][] = $map;
     }
 
-    public function config(string $name, callable $fun, array $map = []): void
+    public function configure(string $name, callable $fun, array $map = []): void
     {
         $name = $this->name($name);
         if (isset($this->active[$name])) {
@@ -431,17 +432,5 @@ class Container implements ContainerInterface, \ArrayAccess
     public function __call(string $name, array $arguments)
     {
         return $this->get($name);
-    }
-
-    public function autowire(string $name)
-    {
-        if ($this->has($name)) {
-            return $this->get($name);
-        }
-
-        $object = $this->create($name);
-        $this->insert($name, $object);
-
-        return $object;
     }
 }
