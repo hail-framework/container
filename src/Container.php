@@ -91,12 +91,12 @@ class Container implements ContainerInterface, \ArrayAccess
                 break;
 
             case isset($this->factory[$name]):
-                $factory = $this->factory[$name];
+                [$factory, $map] = $this->factory[$name];
 
                 if (\is_string($factory) && \class_exists($factory)) {
-                    $this->values[$name] = $this->create($factory, $this->factoryMap[$name]);
+                    $this->values[$name] = $this->create($factory, $map);
                 } else {
-                    $this->values[$name] = $this->call($factory, $this->factoryMap[$name]);
+                    $this->values[$name] = $this->call($factory, $map);
                 }
                 break;
 
@@ -112,12 +112,12 @@ class Container implements ContainerInterface, \ArrayAccess
 
         if (isset($this->calls[$name])) {
             $calls = $this->calls[$name];
-            foreach ($calls['method'] as $index => $method) {
-                $this->call([$this->values[$name], $method], $this->callsMap['method'][$name][$index]);
+            foreach ($calls['method'] as [$method, $map]) {
+                $this->call([$this->values[$name], $method], $map);
             }
 
-            foreach ($calls['callable'] as $index => $call) {
-                $value = $this->call($call, $this->callsMap['callable'][$name][$index]);
+            foreach ($calls['callable'] as [$call, $map]) {
+                $value = $this->call($call, $map);
 
                 if ($value !== null) {
                     $this->values[$name] = $value;
@@ -334,8 +334,7 @@ class Container implements ContainerInterface, \ArrayAccess
                 throw new InvalidArgumentException('Unexpected argument type for $define: ' . \gettype($define));
         }
 
-        $this->factory[$name] = $func;
-        $this->factoryMap[$name] = $map;
+        $this->factory[$name] = [$func, $map];
 
         unset($this->values[$name], $this->alias[$name]);
     }
@@ -350,7 +349,6 @@ class Container implements ContainerInterface, \ArrayAccess
 
         unset(
             $this->factory[$name],
-            $this->factoryMap[$name],
             $this->alias[$name]
         );
     }
@@ -388,8 +386,7 @@ class Container implements ContainerInterface, \ArrayAccess
             throw new InvalidArgumentException("'$name' already initialized");
         }
 
-        $this->calls['method'][$name][] = $method;
-        $this->callsMap['method'][$name][] = $map;
+        $this->calls['method'][$name][] = [$method, $map];
     }
 
     public function configure(string $name, callable $fun, array $map = []): void
@@ -403,8 +400,7 @@ class Container implements ContainerInterface, \ArrayAccess
             $map[0] = $this->ref($name);
         }
 
-        $this->calls['callable'][$name][] = $fun;
-        $this->callsMap['callable'][$name][] = $map;
+        $this->calls['callable'][$name][] = [$fun, $map];
     }
 
     public function ref(string $name): Reference
@@ -422,10 +418,8 @@ class Container implements ContainerInterface, \ArrayAccess
             $this->active[$name],
             $this->values[$name],
             $this->factory[$name],
-            $this->factoryMap[$name],
             $this->alias[$name],
-            $this->calls[$name],
-            $this->callsMap[$name]
+            $this->calls[$name]
         );
     }
 
