@@ -14,6 +14,9 @@ class Container implements ContainerInterface, \ArrayAccess
 {
     use ArrayTrait;
 
+    protected const METHOD = 'method';
+    protected const CALLABLE = 'callable';
+
     /**
      * @var mixed[]
      */
@@ -27,23 +30,7 @@ class Container implements ContainerInterface, \ArrayAccess
     /**
      * @var array
      */
-    protected $factoryMap = [];
-
-    /**
-     * @var array
-     */
-    protected $calls = [
-        'method' => [],
-        'callable' => [],
-    ];
-
-    /**
-     * @var array
-     */
-    protected $callsMap = [
-        'method' => [],
-        'callable' => [],
-    ];
+    protected $calls = [];
 
     /**
      * @var bool[]
@@ -112,11 +99,11 @@ class Container implements ContainerInterface, \ArrayAccess
 
         if (isset($this->calls[$name])) {
             $calls = $this->calls[$name];
-            foreach ($calls['method'] as [$method, $map]) {
+            foreach ($calls[self::METHOD] as [$method, $map]) {
                 $this->call([$this->values[$name], $method], $map);
             }
 
-            foreach ($calls['callable'] as [$call, $map]) {
+            foreach ($calls[self::CALLABLE] as [$call, $map]) {
                 $value = $this->call($call, $map);
 
                 if ($value !== null) {
@@ -202,8 +189,7 @@ class Container implements ContainerInterface, \ArrayAccess
         array $params,
         array $map,
         bool $safe = true
-    ): array
-    {
+    ): array {
         $args = [];
         foreach ($params as $index => $param) {
             $value = $this->getParameterValue($param, $index, $map, $safe);
@@ -223,8 +209,7 @@ class Container implements ContainerInterface, \ArrayAccess
         int $index,
         array $map,
         bool $safe
-    )
-    {
+    ) {
         if ($isReflection = ($param instanceof \ReflectionParameter)) {
             $name = $param->name;
         } elseif (\is_array($param)) {
@@ -386,7 +371,7 @@ class Container implements ContainerInterface, \ArrayAccess
             throw new InvalidArgumentException("'$name' already initialized");
         }
 
-        $this->calls['method'][$name][] = [$method, $map];
+        $this->addCalls($name, self::METHOD, [$method, $map]);
     }
 
     public function configure(string $name, callable $fun, array $map = []): void
@@ -400,7 +385,19 @@ class Container implements ContainerInterface, \ArrayAccess
             $map[0] = $this->ref($name);
         }
 
-        $this->calls['callable'][$name][] = [$fun, $map];
+        $this->addCalls($name, self::CALLABLE, [$fun, $map]);
+    }
+
+    private function addCalls(string $name, string $type, array $value): void
+    {
+        if (!isset($this->calls[$name])) {
+            $this->calls[$name] = [
+                self::METHOD => [],
+                self::CALLABLE => [],
+            ];
+        }
+
+        $this->calls[$name][$type][] = $value;
     }
 
     public function ref(string $name): Reference
