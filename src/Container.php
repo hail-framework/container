@@ -104,7 +104,7 @@ class Container implements ContainerInterface, \ArrayAccess
             }
 
             foreach ($calls[self::CALLABLE] as [$call, $map]) {
-                $value = $this->call($call, $map);
+                $value = $this->call($call, [$this->values[$name]] + $map);
 
                 if ($value !== null) {
                     $this->values[$name] = $value;
