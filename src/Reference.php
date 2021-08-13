@@ -9,25 +9,16 @@ class Reference
     /**
      * @var self[]
      */
-    private static $instances;
+    private static array $instances;
 
-    /**
-     * @var string
-     */
-    private $name;
-
-    private function __construct(string $name)
-    {
-        $this->name = $name;
+    private function __construct(
+        private string $name
+    ) {
     }
 
     public static function create(string $name): self
     {
-        if (!isset(self::$instances[$name])) {
-            self::$instances[$name] = new self($name);
-        }
-
-        return self::$instances[$name];
+        return self::$instances[$name] ??= new self($name);
     }
 
     public function get(ContainerInterface $container)

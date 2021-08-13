@@ -2,8 +2,7 @@
 
 namespace Hail\Container;
 
-use Hail\Arrays\ArrayTrait;
-use Hail\Singleton\SingletonTrait;
+use Hail\Arrays\ArrayAccessTrait;
 use Psr\Container\ContainerInterface;
 use Hail\Container\Exception\{
     InvalidArgumentException,
@@ -12,35 +11,29 @@ use Hail\Container\Exception\{
 
 class Container implements ContainerInterface, \ArrayAccess
 {
-    use ArrayTrait;
+    use ArrayAccessTrait;
 
     protected const METHOD = 'method';
     protected const CALLABLE = 'callable';
 
-    /**
-     * @var mixed[]
-     */
-    protected $values = [];
+    protected array $values = [];
 
     /**
      * @var callable[]
      */
-    protected $factory = [];
+    protected array $factory = [];
 
-    /**
-     * @var array
-     */
-    protected $calls = [];
+    protected array $calls = [];
 
     /**
      * @var bool[]
      */
-    protected $active = [];
+    protected array $active = [];
 
     /**
      * @var string[]
      */
-    protected $alias = [];
+    protected array $alias = [];
 
     public function __construct()
     {
@@ -58,15 +51,7 @@ class Container implements ContainerInterface, \ArrayAccess
         }
     }
 
-    /**
-     * @param string $name
-     *
-     * @return mixed
-     *
-     * @throws NotFoundException
-     * @throws InvalidArgumentException
-     */
-    public function get(string $name)
+    public function get(string $name): mixed
     {
         $name = $this->name($name);
 
@@ -123,18 +108,7 @@ class Container implements ContainerInterface, \ArrayAccess
             \array_key_exists($name, $this->values);
     }
 
-
-    /**
-     * @param callable                            $callback
-     * @param array                               $map
-     * @param \ReflectionParameter[]|array[]|null $params
-     *
-     * @return mixed
-     *
-     * @throws InvalidArgumentException
-     *
-     */
-    public function call(callable $callback, array $map = [], array $params = null)
+    public function call(callable $callback, array $map = [], array $params = null): mixed
     {
         $params = $params ?? Reflection::getCallableParameters($callback);
         if ($params !== []) {
@@ -146,23 +120,13 @@ class Container implements ContainerInterface, \ArrayAccess
         return $callback();
     }
 
-    /**
-     * @param string                              $class
-     * @param mixed[]                             $map
-     * @param \ReflectionParameter[]|array[]|null $params
-     *
-     * @return mixed
-     *
-     * @throws InvalidArgumentException
-     *
-     */
-    public function create(string $class, array $map = [], array $params = null)
+    public function create(string $class, array $map = [], array $params = null): object
     {
         if (!\class_exists($class)) {
             throw new InvalidArgumentException("Unable to create {$class}");
         }
 
-        if (isset(\class_uses($class)[SingletonTrait::class])) {
+        if (\method_exists($class, 'getInstance')) {
             return $class::getInstance();
         }
 
@@ -209,7 +173,7 @@ class Container implements ContainerInterface, \ArrayAccess
         int $index,
         array $map,
         bool $safe
-    ) {
+    ): mixed {
         if ($isReflection = ($param instanceof \ReflectionParameter)) {
             $name = $param->name;
         } elseif (\is_array($param)) {
@@ -279,7 +243,7 @@ class Container implements ContainerInterface, \ArrayAccess
         unset($this->alias[$name]);
     }
 
-    public function replace(string $name, $value)
+    public function replace(string $name, $value): void
     {
         if (!isset($this->active[$name])) {
             throw new InvalidArgumentException("'{$name}' not initialized");
@@ -420,7 +384,7 @@ class Container implements ContainerInterface, \ArrayAccess
         );
     }
 
-    public function __call(string $name, array $arguments)
+    public function __call($name, $arguments)
     {
         return $this->get($name);
     }

@@ -2,21 +2,19 @@
 
 namespace Hail\Container;
 
-use Hail\Singleton\SingletonTrait;
+use Hail\Arrays\Arrays;
 
 class Compiler
 {
-    protected $config;
+    protected array $points = [];
+    protected array $methods = [];
 
-    protected $points = [];
-    protected $methods = [];
+    protected array $alias = [];
+    protected array $abstractAlias = [];
 
-    protected $alias = [];
-    protected $abstractAlias = [];
-
-    public function __construct(array $config)
-    {
-        $this->config = $config;
+    public function __construct(
+        protected array $config
+    ) {
     }
 
     public function compile(): string
@@ -80,14 +78,14 @@ class Compiler
                 continue;
             }
 
+            if (!\is_array($v)) {
+                continue;
+            }
+
             if ($v === []) {
                 if ($this->isClassname($k)) {
                     $this->toMethod($k, $this->classInstance($k));
                 }
-                continue;
-            }
-
-            if (!\is_array($v)) {
                 continue;
             }
 
@@ -199,7 +197,7 @@ class Compiler
             );
         }
 
-        if (\strpos($str, '::') !== false) {
+        if (\str_contains($str, '::')) {
             [$class, $method] = \explode('::', $str, 2);
             $parts = \explode($method, ':', 2);
             $method = $parts[0];
@@ -218,10 +216,10 @@ class Compiler
         $class = $parts[0];
 
         if (!$this->isClassname($class)) {
-            throw new \RuntimeException("Given value can not convert to build function : $str");
+            throw new \RuntimeException("Given value is not a class name: $str");
         }
 
-        if (isset(\class_uses($class)[SingletonTrait::class])) {
+        if (\method_exists($class, 'getInstance')) {
             return "{$class}::getInstance()";
         }
 
@@ -230,8 +228,7 @@ class Compiler
 
     protected function parseStr(string $str): string
     {
-        if (\is_string($str) &&
-            isset($str[0], $str[1]) &&
+        if (isset($str[0], $str[1]) &&
             $str[0] === '@' &&
             $str[1] !== '@'
         ) {
@@ -272,7 +269,7 @@ class Compiler
 
     protected function isClassname(string $name): bool
     {
-        return (\class_exists($name) || \interface_exists($name) || \trait_exists($name)) && \strtoupper($name[0]) === $name[0];
+        return (\class_exists($name) || \interface_exists($name)) && \strtoupper($name[0]) === $name[0];
     }
 
     protected function classname(string $name): string

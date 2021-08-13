@@ -1,18 +1,18 @@
 class Container extends Hail\Container\Container
 {
-    protected static $entryPoints = [
+    protected static array $entryPoints = [
         <?=\implode("\n\t\t", $entryPoints)?>
     ];
 
-    protected $alias = [
+    protected array $alias = [
         <?=\implode("\n\t\t", $alias)?>
     ];
 
-    protected $abstractAlias = [
+    protected array $abstractAlias = [
         <?=\implode("\n\t\t", $abstractAlias)?>
     ];
 
-    public function get($name)
+    public function get(string $name): mixed
     {
         $name = $this->getAlias($name);
 
