@@ -89,15 +89,6 @@ class Compiler
                 continue;
             }
 
-            $to = (array) ($v['to'] ?? []);
-            if (isset($v['class|to']) && $v['class|to'] !== $k) {
-                $to[] = $v['class|to'];
-            }
-
-            foreach ($to as $ref) {
-                $alias[$ref] = $k;
-            }
-
             if (isset($v['alias'])) {
                 if (\strpos($v['alias'], '->') > 0) {
                     $this->toMethod($k, $this->parseStr('@' . $v['alias']));
@@ -105,6 +96,18 @@ class Compiler
                     $alias[$k] = $v['alias'];
                 }
                 continue;
+            }
+
+            $to = $v['to'] ?? [];
+            if ($to === true) {
+                if (isset($v['class'])) {
+                    $alias[$v['class']] = $k;
+                }
+            } else {
+                $to = (array) $to;
+                foreach ($to as $ref) {
+                    $alias[$ref] = $k;
+                }
             }
 
             $arguments = '';
@@ -127,8 +130,6 @@ class Compiler
                 if (!\is_string($factory)) {
                     continue;
                 }
-            } elseif (isset($v['class|to'])) {
-                $factory = $v['class|to'];
             } elseif (isset($v['class'])) {
                 $factory = $v['class'];
             } elseif ($this->isClassname($k)) {
@@ -285,7 +286,7 @@ class Compiler
         return \var_export($name, true);
     }
 
-    protected function methodname(string $string): string
+    protected function methodName(string $string): string
     {
         if ($string[0] === '\\') {
             $string = \ltrim($string, '\\');
@@ -305,7 +306,7 @@ class Compiler
 
     protected function toPoint(string $name, string $point = null): string
     {
-        $method = $this->methodname($point ?? $name);
+        $method = $this->methodName($point ?? $name);
         $this->points[$name] = "'$method'";
 
         return $method;
