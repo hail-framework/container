@@ -82,9 +82,9 @@ class Compiler
                 continue;
             }
 
-            if ($v === []) {
+            if (!Arrays::isAssoc($v)) {
                 if ($this->isClassname($k)) {
-                    $this->toMethod($k, $this->classInstance($k));
+                    $this->toMethod($k, $this->classInstance($k . ':' . $this->parseArguments($v)));
                 }
                 continue;
             }
@@ -154,7 +154,12 @@ class Compiler
 
     protected function parseArguments(array $args): string
     {
-        return \implode(', ', \array_map([$this, 'parseStr'], $args));
+        $ret = '';
+        foreach ($args as $arg) {
+            $ret .= $this->parseStr($arg) . ',';
+        }
+
+        return $ret;
     }
 
     protected function parseProperty(array $props): array

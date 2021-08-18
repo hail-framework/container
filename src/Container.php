@@ -169,18 +169,13 @@ class Container implements ContainerInterface, \ArrayAccess
     }
 
     protected function getParameterValue(
-        $param,
+        \ReflectionParameter|array $param,
         int $index,
         array $map,
         bool $safe
     ): mixed {
-        if ($isReflection = ($param instanceof \ReflectionParameter)) {
-            $name = $param->name;
-        } elseif (\is_array($param)) {
-            $name = $param['name'];
-        } else {
-            throw new InvalidArgumentException('Parameter must be the instance of \ReflectionParameter or array');
-        }
+        $isReflection = $param instanceof \ReflectionParameter;
+        $name = $isReflection ? $param->name : $param['name'];
 
         if (\array_key_exists($name, $map)) {
             return $map[$name];
@@ -231,7 +226,7 @@ class Container implements ContainerInterface, \ArrayAccess
         );
     }
 
-    public function insert(string $name, $value): void
+    public function insert(string $name, mixed $value): void
     {
         if ($this->has($name)) {
             throw new InvalidArgumentException("Try to override the existing '{$name}'");
@@ -243,7 +238,7 @@ class Container implements ContainerInterface, \ArrayAccess
         unset($this->alias[$name]);
     }
 
-    public function replace(string $name, $value): void
+    public function replace(string $name, mixed $value): void
     {
         if (!isset($this->active[$name])) {
             throw new InvalidArgumentException("'{$name}' not initialized");
@@ -253,7 +248,7 @@ class Container implements ContainerInterface, \ArrayAccess
         unset($this->alias[$name]);
     }
 
-    public function register(string $name, $define = null, array $map = []): void
+    public function register(string $name, mixed $define = null, array $map = []): void
     {
         if (isset($this->active[$name])) {
             throw new InvalidArgumentException("Try to override the existing '{$name}'");
@@ -288,7 +283,7 @@ class Container implements ContainerInterface, \ArrayAccess
         unset($this->values[$name], $this->alias[$name]);
     }
 
-    public function set(string $name, $value): void
+    public function set(string $name, mixed $value): void
     {
         if (isset($this->active[$name])) {
             throw new InvalidArgumentException("Try to override the existing '{$name}'");
